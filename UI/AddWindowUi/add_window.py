@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget
-from PytrackUtils.WindowUtils.window_type import *
+from PytrackUtils.WindowUtils.window_type import WindowType
+from PytrackUtils.Helpers.database_helper import record_window_type
 from .ui_add_window import *
 
 
@@ -20,6 +21,6 @@ class UiAddWindow(QWidget, Ui_add_widget):
         self.window_type.window_type = self.comboBox_type.currentText()
         self.window_type.window_rating = int(self.lineEdit_points.text())
 
-        self.window_type.record_in_database()
+        record_window_type(self.window_type)
 
         self.deleteLater()

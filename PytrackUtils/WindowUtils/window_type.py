@@ -1,6 +1,28 @@
 import sqlite3
 
-from PytrackUtils.Helpers.database_helper import record_window_type, find_window_on_database_by_name
+def find_window_on_database_by_name(query_name: str) :
+    """find window on data base by name returns windowType object"""
+    conn = sqlite3.connect("pyTrack.db")
+    c = conn.cursor()
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS windowTypes(windowName text, windowType text, windowRating integer)"""
+    )
+    c.execute("""SELECT * FROM windowTypes WHERE windowName = ?""", (query_name,))
+    results = c.fetchall()
+    if results != []:
+        window = WindowType()
+        window.window_name = results[0][0]
+        window.window_type = results[0][1]
+        window.window_rating = results[0][2]
+        conn.commit()
+        conn.close()
+        return window
+
+    else:
+        conn.commit()
+        conn.close()
+        return None
+
 
 class WindowType:
     """Class WindowType use to store name, type, and rating of window. These are used for storing user preference on how each window should be treated by the main loop."""
@@ -9,13 +31,13 @@ class WindowType:
     window_type: str = "good"
     window_rating: int = 0
 
-    def check_app_type(self, window_name_param : str):
+    def check_app_type(self, window_title : str):
         '''Takes a window checks and assign values to the instance."'''
 
-        separated_window_title = window_name_param.split("- ")
+        separated_window_title = window_title.split("- ")
 
-        for part in separated_window_title:
-            window = find_window_on_database_by_name(part)
+        for slice in separated_window_title:
+            window = find_window_on_database_by_name(slice)
 
             if window != None:
                 self.window_name = window.window_name
@@ -24,10 +46,6 @@ class WindowType:
                 break
             else:
                 pass
-    
-    def record_in_database(self):
-        record_window_type(self.window_name, self.window_type, self.window_rating)
-
     def __str__(self) -> str:
         return f"name: {self.window_name}\ntype: {self.window_type}\nrating: {self.window_rating}"
 

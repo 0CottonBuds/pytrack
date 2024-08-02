@@ -1,9 +1,6 @@
 import sqlite3
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from PytrackUtils.WindowUtils.window_type import WindowType
+from PytrackUtils.WindowUtils.window_type import WindowType
 
 def cursor_execute(command:str, args: tuple):
     conn = sqlite3.connect("pyTrack.db")
@@ -54,7 +51,7 @@ def record_window_time(window_name, time_elapsed):
 
     print("successfully added to database")
 
-def record_window_type(window_name, window_type, window_rating):
+def record_window_type(window: WindowType):
     """enter the data to data base"""
     conn = sqlite3.connect("pyTrack.db")
     c = conn.cursor()
@@ -64,7 +61,7 @@ def record_window_type(window_name, window_type, window_rating):
     )
     c.execute(
         """INSERT INTO windowTypes(windowName, windowType, windowRating) VALUES(?,?,?)""",
-        (window_name, window_type, window_rating),
+        (window.window_name, window.window_type, window.window_rating),
     )
     conn.commit()
     conn.close()
@@ -81,9 +78,7 @@ def find_window_on_database_by_name(query_name: str):
     results = c.fetchall()
 
     if results != []:
-        window : WindowType
-        if TYPE_CHECKING:
-            assert isinstance(window, WindowType)
+        window : WindowType = WindowType()
         window.window_name = results[0][0]
         window.window_type = results[0][1]
         window.window_rating = results[0][2]

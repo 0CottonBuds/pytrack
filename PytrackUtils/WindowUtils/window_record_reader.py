@@ -294,7 +294,7 @@ def get_percentage_of_time_of_each_window(
         window_time_in_seconds += window.window_time_elapsed.minutes * 60
         window_time_in_seconds += window.window_time_elapsed.seconds
 
-        percentage = window_time_in_seconds / total_time_in_seconds
+        percentage = window_time_in_seconds and window_time_in_seconds / total_time_in_seconds or 0
         percentage = percentage * 100
 
         window.window_time_elapsed.percentage = round(percentage, 2)
@@ -328,11 +328,4 @@ if __name__ == "__main__":
         print(f"percentage: {window.window_time_elapsed.percentage}")
         full_percentage += window.window_time_elapsed.percentage
     print(round(full_percentage, 2))
-
-    ###############################################################################
-    # dates test
-
-    # fetcher = WindowRecordFetcher()
-    # list_of_dates = fetcher.get_dates("this month")
-    # print(list_of_dates)
     pass

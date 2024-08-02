@@ -1,13 +1,11 @@
 import pygetwindow as gw
 import datetime as dt
-from PytrackUtils import point_tracker
 
 from PySide6.QtCore import QObject
 
-from PytrackUtils.WindowUtils import window_type
-from PytrackUtils.WindowUtils.window_entry import WindowTimeEntries
-
-
+from PytrackUtils.Helpers.database_helper import record_window_time 
+from PytrackUtils.point_tracker import PointTracker 
+from PytrackUtils.WindowUtils.window_type import WindowType
 
 class PyTrackWorker(QObject):
     time_started: tuple
@@ -15,29 +13,26 @@ class PyTrackWorker(QObject):
 
     def __init__(self, main_window):
         super().__init__()
-        print("helloWorld")
 
         self.main_window = main_window
 
         self.last_active_window = None
-        self.dt_now = dt.datetime.now()
-        self.time_started = (self.dt_now.hour, self.dt_now.minute, self.dt_now.second)
+        self.time_started = self.get_time_now()
         self.time_finished = (0, 0, 0)
-        self.point_tracker = point_tracker.PointTracker()
+        self.point_tracker = PointTracker()
 
     def main_loop(self):
-        self.new_active_window = gw.getActiveWindow()
+        self.current_active_window = gw.getActiveWindow()
 
-        self.dt_now = dt.datetime.now()
-        self.time_finished = (
-            self.dt_now.hour,
-            self.dt_now.minute,
-            self.dt_now.second,
-        )
+        if self.last_active_window is None:
+            self.last_active_window = self.current_active_window
+
+        self.time_finished = self.get_time_now() 
 
         # check app type
-        window = window_type.WindowType()
-        window.check_app_type(self.new_active_window.title)
+        window = WindowType()
+        window.check_app_type(self.current_active_window.title)
+
         # change points
         self.point_tracker.change_points(window.window_type, window.window_rating)
         self.point_tracker.check_point_threshold()
@@ -46,47 +41,24 @@ class PyTrackWorker(QObject):
         print(self.point_tracker)
         self.main_window.label_points_home.setText(str(self.point_tracker))
 
-        is_window_changed = self.new_active_window != self.last_active_window
+        """checks if window changed if it changes it records the data to the
+        database if all prerequisite parameters exists"""
+        is_window_changed = self.current_active_window != self.last_active_window
         if is_window_changed:
-            """checks if window changed if it changes it records the data to the
-            database if all prerequisite parameters exists
-            time_finished and time_started
-            last_active_window and new_active_window"""
+            self.last_active_window = self.current_active_window
+            self.time_started = self.get_time_now()
 
             is_parameters_complete = (
-                self.time_finished is not None
-                and self.time_started is not None
-                and self.last_active_window is not None
-                and self.new_active_window is not None
+                self.time_finished is not None and 
+                self.time_started is not None and
+                self.last_active_window is not None
             )
             if is_parameters_complete:
+                record_window_time(self.last_active_window.title, self.get_total_elapsed_time())
 
-                window_entry = WindowTimeEntries(
-                    self.last_active_window.title,  # type: ignore
-                    self.get_elapsed_time(),
-                )
-                window_entry.record_in_database()
+        print(self.get_total_elapsed_time())
 
-            # set the last active window to the current window
-            self.last_active_window = self.new_active_window
-
-            self.time_started = (
-                self.dt_now.hour,
-                self.dt_now.minute,
-                self.dt_now.second,
-            )
-
-        self.check_if_last_window_exists()
-
-        elapsed_time = self.get_elapsed_time()
-        print(elapsed_time)
-
-    def check_if_last_window_exists(self):
-        """checks if last window is none if yes then set it to the new active window"""
-        if self.last_active_window is None:
-            self.last_active_window = self.new_active_window
-
-    def get_elapsed_time(self) -> tuple:
+    def get_total_elapsed_time(self) -> tuple:
         """function to subtract two time(hours, minutes, seconds)\n
         returns tuple(Hours, Minutes, Seconds)\n
         check TODO to see bugs"""
@@ -107,5 +79,9 @@ class PyTrackWorker(QObject):
 
         time_elapsed = (hours, minutes, seconds)
         return time_elapsed
-        
+
+    def get_time_now(self):
+        time_now = dt.datetime.now()
+        return (time_now.hour, time_now.minute, time_now.second)
+
 

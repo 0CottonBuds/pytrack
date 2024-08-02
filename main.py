@@ -88,7 +88,7 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
 
         # set timer signals to slots
         self.main_loop_timer.timeout.connect(self.pytrack_worker.main_loop)  # type: ignore
-        self.point_graph_timer.timeout.connect(self.add_point_to_point_graph)
+        self.point_graph_timer.timeout.connect(self.add_point_to_graph)
 
     def buttons_init(self):
         # setting the button signals to slots
@@ -126,9 +126,8 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
     def activate_deactivate_main_loop(self):
         if not self.main_loop_active:
             print("Activated")
-            time_to_loop = 5000  # msec(5 secs)
-            self.main_loop_timer.start(time_to_loop)
-            self.point_graph_timer.start(time_to_loop)
+            self.main_loop_timer.start(5000)
+            self.point_graph_timer.start(5000)
             self.main_loop_active = True
             self.button_activate_deactivate_main_loop.setText("Deactivate")
         elif self.main_loop_active:
@@ -149,11 +148,14 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
         records: list[WindowRecord] = []
         fetcher = WindowRecordFetcher()
         dates = fetcher.get_dates(query_date)
-        fetcher.format_records(fetcher.retrieve_all_raw_records_by_many_dates(dates))
+        raw_records = fetcher.retrieve_all_raw_records_by_many_dates(dates) 
+        fetcher.format_records(raw_records)
         fetcher.filter_formatted_records_by_type(query_type)
+
         records = fetcher.formatted_records
         records = get_time_of_each_window(records)
         records = get_percentage_of_time_of_each_window(records)
+
         self.update_scroll_area_contents(records)
 
     ### NAVIGATION FUNCTIONS ###
@@ -244,7 +246,7 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
         change_stylesheet(self, text, app)
         edit_config("config.ini", "App", "theme", text)
 
-    def add_point_to_point_graph(self):
+    def add_point_to_graph(self):
         count = self.point_line_series.count()
         points = self.pytrack_worker.point_tracker.points / 10  # points divided by 10
         self.point_line_series.append(count, points)
