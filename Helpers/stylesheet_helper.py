@@ -8,7 +8,7 @@ def change_stylesheet(object, theme: str, app:QApplication):
         style : (str) Theme to use.
         app : (QApplication) Application object that we want to apply the stylesheet.
     '''
-    _theme = open(f"themes/{theme}_theme.css","r").read()
+    _theme = open(f"Assets/themes/{theme}_theme.css","r").read()
     app.setStyleSheet(_theme)
     print(f"Changed theme to {theme} theme.")
     object.update()

@@ -4,7 +4,7 @@ import datetime as dt
 from PySide6.QtCore import QObject, Signal
 
 from Helpers.database_helper import record_window_time 
-from PyTrack.window import Window, check_app_type
+from PytrackLibs.window import Window, check_app_type
 
 class PyTrack(QObject):
     time_started: tuple

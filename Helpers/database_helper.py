@@ -70,7 +70,7 @@ def record_window_type(window):
 def find_window_on_database_by_name(query_name: str):
     """find window on data base by name returns windowType object"""
 
-    from PyTrack.window import Window #imported here to prevent circular dependency
+    from PytrackLibs.window import Window #imported here to prevent circular dependency
 
     conn = sqlite3.connect("pyTrack.db")
     c = conn.cursor()

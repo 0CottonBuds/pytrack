@@ -11,11 +11,11 @@ from UI.main.main_ui import Ui_MainWindow
 from UI.WindowRecordUi.window_record import Ui_Window_Record
 from UI.AddWindowUi.add_window import UiAddWindow
 
-from PyTrack.window import Window, WindowFetcher
-from PyTrack.win_32_filter import Win32Filter
-from PyTrack.window import get_time_of_each_window, get_percentage_of_time_of_each_window
-from PyTrack.point_tracker import PointTracker
-from PyTrack.pytrack import PyTrack 
+from PytrackLibs.window import Window, WindowFetcher
+from PytrackLibs.win_32_filter import Win32Filter
+from PytrackLibs.window import get_time_of_each_window, get_percentage_of_time_of_each_window
+from PytrackLibs.point_tracker import PointTracker
+from PytrackLibs.pytrack import PyTrack 
 
 from Helpers.webbrowser_helper import go_to_link_github, go_to_link_github_repository, go_to_link_twitter, go_to_link_youtube_channel, go_to_link_youtube_video
 from Helpers.stylesheet_helper import change_stylesheet, get_themes

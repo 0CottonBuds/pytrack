@@ -11,7 +11,7 @@ def setup_system_tray(app: QApplication, pytrack_main_window):
         assert isinstance(pytrack_main_window, App)
 
     # Create the icon
-    icon = QIcon("Icons\icon.ico")
+    icon = QIcon("Assets\Icons\icon.ico")
 
     # Create the tray
     tray = QSystemTrayIcon()
