@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication
-from .config_helper import *
+from Helpers.config_helper import read_config
 
 def change_stylesheet(object, theme: str, app:QApplication):
     '''Function that changes the stylesheet of application.

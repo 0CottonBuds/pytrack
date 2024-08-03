@@ -1,6 +1,6 @@
 import sqlite3
 import datetime as dt
-from PytrackUtils.Helpers.database_helper import find_window_on_database_by_name
+from Helpers.database_helper import find_window_on_database_by_name
 
 
 class Window:
@@ -40,7 +40,6 @@ def check_app_type(window_title : str):
             return window
 
     return Window()
-
 
 class WindowTime:
     """class window time for keeping data(time)"""
@@ -85,7 +84,6 @@ class WindowTime:
         self.format_time()
 
         return WindowTime(f"{self.hours}, {self.minutes}, {self.seconds}")
-
 
 class WindowFetcher:
     """Class that fetches the data and formats it\n
@@ -242,7 +240,6 @@ class WindowFetcher:
             message += f"{records.name}, {records.time_elapsed.get_time()} \n"
         return message
 
-
 def get_total_time_elapsed(formatted_records: list[Window]) -> WindowTime:
     """Calculate the total time elapsed.
 
@@ -258,7 +255,6 @@ def get_total_time_elapsed(formatted_records: list[Window]) -> WindowTime:
     for entry in formatted_records:
         total_time += entry.time_elapsed
     return total_time
-
 
 def get_time_of_each_window(
     formatted_records: list[Window],
@@ -285,7 +281,6 @@ def get_time_of_each_window(
             unique_windows.append(unique_window)
 
     return unique_windows
-
 
 def get_percentage_of_time_of_each_window(
     formatted_records: list[Window],

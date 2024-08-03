@@ -1,7 +1,7 @@
 from PySide6.QtCore import Slot
 
-from .Helpers.notification_helper import notify_break, notify_back_to_work 
-import configparser
+from Helpers.notification_helper import notify_break, notify_back_to_work 
+from Helpers.config_helper import read_config
 
 
 class PointTracker:
@@ -38,12 +38,10 @@ class PointTracker:
             notify_back_to_work()
 
     def read_settings_config_file(self):
-        config_parser = configparser.ConfigParser()
-        config_parser.read(r".\config.ini")  # type: ignore
-
-        self.starting_points = int(config_parser["App"]["starting_points"])
-        self.threshold_warning = int(config_parser["App"]["warning_threshold"])  # type: ignore
-        self.threshold_break = int(config_parser["App"]["break_threshold"])
+        
+        self.starting_points = int(read_config(r"./config.ini", "App", "starting_points" ))
+        self.threshold_warning = int(read_config(r"./config.ini", "App", "starting_points" ))  # type: ignore
+        self.threshold_break = int(read_config(r"./config.ini", "App", "starting_points" ))
 
     def __str__(self) -> str:
         return f"Points: {self.points}"

@@ -1,4 +1,4 @@
-from PytrackUtils.Helpers.database_helper import find_window_on_database_by_name
+from Helpers.database_helper import find_window_on_database_by_name
 
 """This is responsible for filtering the return value of pygetwindow."""
 
