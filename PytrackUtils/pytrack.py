@@ -4,8 +4,7 @@ import datetime as dt
 from PySide6.QtCore import QObject, Signal
 
 from PytrackUtils.Helpers.database_helper import record_window_time 
-from PytrackUtils.point_tracker import PointTracker 
-from PytrackUtils.WindowUtils.window_type import WindowType
+from PytrackUtils.WindowUtils.window import Window, check_app_type
 
 class PyTrack(QObject):
     time_started: tuple
@@ -30,11 +29,11 @@ class PyTrack(QObject):
         # this is a loop so every time we loop we consider that this is the time finished
         self.time_finished = self.get_time_now() 
 
-        window = WindowType()
-        window.check_app_type(self.current_active_window.title)
+        window = Window()
+        window = check_app_type(self.current_active_window.title)
 
         # we emit so point tracker on App class can change points and ui label to change
-        self.points_changed.emit(window.window_type, window.window_rating)
+        self.points_changed.emit(window.type, window.rating)
 
         print(f"Active Window: {window}")
 
@@ -42,9 +41,6 @@ class PyTrack(QObject):
         # database if all prerequisite parameters exists
         is_window_changed = self.current_active_window != self.last_active_window
         if is_window_changed:
-            self.last_active_window = self.current_active_window
-            self.time_started = self.get_time_now()
-
             is_parameters_complete = (
                 self.time_finished is not None and 
                 self.time_started is not None and
@@ -52,6 +48,11 @@ class PyTrack(QObject):
             )
             if is_parameters_complete:
                 record_window_time(self.last_active_window.title, self.get_total_window_time())
+
+            # this is here cuz we need to record window time fisst before altering the time start
+            self.last_active_window = self.current_active_window
+            self.time_started = self.get_time_now()
+
 
         print(self.get_total_window_time())
 

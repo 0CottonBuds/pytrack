@@ -11,10 +11,10 @@ from UI.main.main_ui import Ui_MainWindow
 from UI.WindowRecordUi.window_record import Ui_Window_Record
 from UI.AddWindowUi.add_window import UiAddWindow
 
-from PytrackUtils.WindowUtils.window_record_reader import Window, WindowRecordFetcher
+from PytrackUtils.WindowUtils.window import Window, WindowFetcher
 from PytrackUtils.WindowUtils.win_32_filter import Win32Filter
-from PytrackUtils.WindowUtils.window_record_reader import get_time_of_each_window, get_percentage_of_time_of_each_window
-from PytrackUtils.Helpers.webbrowser_helper import go_to_link_github, go_to_link_twitter, go_to_link_youtube_channel, go_to_link_youtube_video
+from PytrackUtils.WindowUtils.window import get_time_of_each_window, get_percentage_of_time_of_each_window
+from PytrackUtils.Helpers.webbrowser_helper import go_to_link_github, go_to_link_github_repository, go_to_link_twitter, go_to_link_youtube_channel, go_to_link_youtube_video
 from PytrackUtils.Helpers.stylesheet_helper import change_stylesheet, get_themes
 from PytrackUtils.Helpers.config_helper import edit_config, read_config
 from PytrackUtils.Helpers.database_helper import clear_window_history, clear_window_settings
@@ -152,7 +152,7 @@ class App(QMainWindow, Ui_MainWindow):
 
         print("getting records")
         records: list[Window] = []
-        fetcher = WindowRecordFetcher()
+        fetcher = WindowFetcher()
         dates = fetcher.get_dates(query_date)
         raw_records = fetcher.retrieve_all_raw_records_by_many_dates(dates) 
         fetcher.format_records(raw_records)

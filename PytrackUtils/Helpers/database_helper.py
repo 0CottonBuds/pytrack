@@ -38,10 +38,11 @@ def record_window_time(window_name, time_elapsed):
     today = dt.date.today()
     today = [today.year, today.month, today.day]
     date_string = f"{today[0]}-{today[1]}-{today[2]}"
+    time_string = f"{time_elapsed[0]}, {time_elapsed[1]}, {time_elapsed[2]}"
 
     c.execute(
         """INSERT INTO windowTimeEntries VALUES(?,?,?)""",
-        (window_name, str(time_elapsed), date_string),
+        (window_name, time_string, date_string),
     )
 
     conn.commit()
@@ -69,7 +70,7 @@ def record_window_type(window):
 def find_window_on_database_by_name(query_name: str):
     """find window on data base by name returns windowType object"""
 
-    from PytrackUtils.WindowUtils.window_type import WindowType #imported here to prevent circular dependency
+    from PytrackUtils.WindowUtils.window import Window #imported here to prevent circular dependency
 
     conn = sqlite3.connect("pyTrack.db")
     c = conn.cursor()
@@ -80,10 +81,10 @@ def find_window_on_database_by_name(query_name: str):
     results = c.fetchall()
 
     if results != []:
-        window : WindowType = WindowType()
-        window.window_name = results[0][0]
-        window.window_type = results[0][1]
-        window.window_rating = results[0][2]
+        window : Window = Window()
+        window.name = results[0][0]
+        window.type = results[0][1]
+        window.rating = results[0][2]
         conn.commit()
         conn.close()
         return window

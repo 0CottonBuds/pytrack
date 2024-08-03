@@ -1,24 +1,45 @@
 import sqlite3
 import datetime as dt
-from .window_type import *
+from PytrackUtils.Helpers.database_helper import find_window_on_database_by_name
 
 
-class WindowRecord:
+class Window:
     """class to handle and store data that is retrieved from the database"""
 
-    window_type: str
+    short_name: str = ""
+    name: str = ""
+    type: str = ""
+    rating: int = 0
 
-    def __init__(self, entry):
+    def __init__(self, entry = []):
+        if entry == []:
+            return
         window_name: str = entry[0]
         time_elapsed: str = entry[1]
         date_entered: str = entry[2]
 
         split_window_name = window_name.split("- ")
 
-        self.window_short_name: str = split_window_name[-1]
-        self.window_full_name: str = window_name
-        self.window_time_elapsed = WindowTime(time_elapsed)
-        self.window_date_entered = date_entered
+        self.short_name: str = split_window_name[-1]
+        self.name: str = window_name
+        self.time_elapsed = WindowTime(time_elapsed)
+        self.date_entered = date_entered
+
+    def __str__(self) -> str:
+        return f"name: {self.name}\ntype: {self.type}\nrating: {self.rating}"
+
+def check_app_type(window_title : str):
+    '''Takes a window checks and assign values to the instance."'''
+
+    separated_window_title = window_title.split("- ")
+
+    for slice in separated_window_title:
+        window = find_window_on_database_by_name(slice)
+
+        if window != None:
+            return window
+
+    return Window()
 
 
 class WindowTime:
@@ -66,11 +87,11 @@ class WindowTime:
         return WindowTime(f"{self.hours}, {self.minutes}, {self.seconds}")
 
 
-class WindowRecordFetcher:
+class WindowFetcher:
     """Class that fetches the data and formats it\n
     -> list[WindowRecords]"""
 
-    formatted_records: list[WindowRecord] = []
+    formatted_records: list[Window] = []
 
     def fetch_all_records(self):
         """combination of format_raw_entries and retrieve_raw_entries as one function"""
@@ -80,19 +101,19 @@ class WindowRecordFetcher:
         """combination of format_raw_entries and retrieve_raw_entries as one function but with dates"""
         self.formatted_records = self.format_records(self.retrieve_all_raw_records_by_date(date))
 
-    def format_records(self, raw_records: list) -> list[WindowRecord]:
+    def format_records(self, raw_records: list) -> list[Window]:
         """Method for formatting records as `WindowRecord` objects"""
         formatted_records = []
         for entry in raw_records:
-            record = WindowRecord(entry)
-            record_type = WindowType()
-            record_type.check_app_type(record.window_full_name)
-            record.window_type = record_type.window_type
+            record = Window(entry)
+            record_type = Window()
+            record_type = check_app_type(record.name)
+            record.type = record_type.type
             formatted_records.append(record)
         self.formatted_records = formatted_records
         return formatted_records
 
-    def filter_formatted_records_by_type(self, query_type: str) -> list[WindowRecord]:
+    def filter_formatted_records_by_type(self, query_type: str) -> list[Window]:
         """function to filter WindowRecord objects by their type
 
         Parameters:
@@ -103,10 +124,10 @@ class WindowRecordFetcher:
 
         TODO: this function is untested
         """
-        filtered_formatted_records: list[WindowRecord] = []
+        filtered_formatted_records: list[Window] = []
         if query_type != "all":
             for record in self.formatted_records:
-                if record.window_type == query_type:
+                if record.type == query_type:
                     filtered_formatted_records.append(record)
                 else:
                     pass
@@ -218,11 +239,11 @@ class WindowRecordFetcher:
         message = ""
 
         for records in self.formatted_records:
-            message += f"{records.window_full_name}, {records.window_time_elapsed.get_time()} \n"
+            message += f"{records.name}, {records.time_elapsed.get_time()} \n"
         return message
 
 
-def get_total_time_elapsed(formatted_records: list[WindowRecord]) -> WindowTime:
+def get_total_time_elapsed(formatted_records: list[Window]) -> WindowTime:
     """Calculate the total time elapsed.
 
     Args:
@@ -235,15 +256,15 @@ def get_total_time_elapsed(formatted_records: list[WindowRecord]) -> WindowTime:
 
     # Iterate over the records and add the elapsed time for each record to the total time.
     for entry in formatted_records:
-        total_time += entry.window_time_elapsed
+        total_time += entry.time_elapsed
     return total_time
 
 
 def get_time_of_each_window(
-    formatted_records: list[WindowRecord],
-) -> list[WindowRecord]:
+    formatted_records: list[Window],
+) -> list[Window]:
     """get time elapsed on each window"""
-    unique_windows: list[WindowRecord] = []
+    unique_windows: list[Window] = []
 
     # loop through the entries
     for entry in formatted_records:
@@ -252,9 +273,9 @@ def get_time_of_each_window(
         is_unique: bool = True
         for window in unique_windows:
             # if not unique add time elapsed to the object that it matched
-            if window.window_short_name == entry.window_short_name:
+            if window.short_name == entry.short_name:
                 is_unique = False
-                window.window_time_elapsed += entry.window_time_elapsed
+                window.time_elapsed += entry.time_elapsed
             else:
                 pass
 
@@ -267,8 +288,8 @@ def get_time_of_each_window(
 
 
 def get_percentage_of_time_of_each_window(
-    formatted_records: list[WindowRecord],
-) -> list[WindowRecord]:
+    formatted_records: list[Window],
+) -> list[Window]:
     """
     Calculates the percentage of time spent on each window and adds this information to the list of window records.
 
@@ -279,25 +300,25 @@ def get_percentage_of_time_of_each_window(
         List[WindowRecord]: A list of window records with the percentage of time spent on each window added.
     """
     total_time: WindowTime = get_total_time_elapsed(formatted_records)
-    time_of_each_window: list[WindowRecord] = get_time_of_each_window(formatted_records)
+    time_of_each_window: list[Window] = get_time_of_each_window(formatted_records)
 
     total_time_in_seconds = total_time.hours * 3600
     total_time_in_seconds += total_time.minutes * 60
     total_time_in_seconds += total_time.seconds
 
-    percentages: list[WindowRecord] = []  # this will be the returned list
+    percentages: list[Window] = []  # this will be the returned list
 
     for window in time_of_each_window:
         percentage = 0
 
-        window_time_in_seconds = window.window_time_elapsed.hours * 3600
-        window_time_in_seconds += window.window_time_elapsed.minutes * 60
-        window_time_in_seconds += window.window_time_elapsed.seconds
+        window_time_in_seconds = window.time_elapsed.hours * 3600
+        window_time_in_seconds += window.time_elapsed.minutes * 60
+        window_time_in_seconds += window.time_elapsed.seconds
 
         percentage = window_time_in_seconds and window_time_in_seconds / total_time_in_seconds or 0
         percentage = percentage * 100
 
-        window.window_time_elapsed.percentage = round(percentage, 2)
+        window.time_elapsed.percentage = round(percentage, 2)
 
         percentages.append(window)
 
