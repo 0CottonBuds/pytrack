@@ -1,6 +1,5 @@
 import sqlite3
 
-from PytrackUtils.WindowUtils.window_type import WindowType
 
 def cursor_execute(command:str, args: tuple):
     conn = sqlite3.connect("pyTrack.db")
@@ -51,7 +50,7 @@ def record_window_time(window_name, time_elapsed):
 
     print("successfully added to database")
 
-def record_window_type(window: WindowType):
+def record_window_type(window):
     """enter the data to data base"""
     conn = sqlite3.connect("pyTrack.db")
     c = conn.cursor()
@@ -69,6 +68,9 @@ def record_window_type(window: WindowType):
 
 def find_window_on_database_by_name(query_name: str):
     """find window on data base by name returns windowType object"""
+
+    from PytrackUtils.WindowUtils.window_type import WindowType #imported here to prevent circular dependency
+
     conn = sqlite3.connect("pyTrack.db")
     c = conn.cursor()
     c.execute(

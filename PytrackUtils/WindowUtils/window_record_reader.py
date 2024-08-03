@@ -303,29 +303,3 @@ def get_percentage_of_time_of_each_window(
 
     return percentages
 
-
-if __name__ == "__main__":
-    records = WindowRecordFetcher()
-    records.fetch_all_records()
-    records = records.formatted_records
-    # print(records)
-
-    total_time_elapsed = get_total_time_elapsed(records)
-    print(total_time_elapsed.get_time())
-    print()
-
-    time_of_each_window = get_time_of_each_window(records)
-
-    for window in time_of_each_window:
-        print(window.window_full_name)
-        print(window.window_time_elapsed.get_time())
-
-    percentage_time_of_each_window = get_percentage_of_time_of_each_window(records)
-
-    full_percentage = 0
-    for window in percentage_time_of_each_window:
-        print(f"name: {window.window_short_name}")
-        print(f"percentage: {window.window_time_elapsed.percentage}")
-        full_percentage += window.window_time_elapsed.percentage
-    print(round(full_percentage, 2))
-    pass

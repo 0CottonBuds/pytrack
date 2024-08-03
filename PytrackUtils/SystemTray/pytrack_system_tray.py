@@ -3,12 +3,12 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import PytrackMainWindow
+    from main import App
 
 def setup_system_tray(app: QApplication, pytrack_main_window):
 
     if TYPE_CHECKING:
-        assert isinstance(pytrack_main_window, PytrackMainWindow)
+        assert isinstance(pytrack_main_window, App)
 
     # Create the icon
     icon = QIcon("Icons\icon.ico")

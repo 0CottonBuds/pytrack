@@ -4,27 +4,29 @@ from PySide6 import QtCore
 from PySide6.QtGui import Qt, QIcon
 from PySide6.QtCharts import QChartView, QChart, QLineSeries
 
+import sys
 import pygetwindow
 
 from UI.main.main_ui import Ui_MainWindow
 from UI.WindowRecordUi.window_record import Ui_Window_Record
 from UI.AddWindowUi.add_window import UiAddWindow
 
-from PytrackUtils.WindowUtils.window_record_reader import *
-from PytrackUtils.WindowUtils.window_type import *
-from PytrackUtils.Helpers.webbrowser_helper import *
+from PytrackUtils.WindowUtils.window_record_reader import Window, WindowRecordFetcher
+from PytrackUtils.WindowUtils.win_32_filter import Win32Filter
+from PytrackUtils.WindowUtils.window_record_reader import get_time_of_each_window, get_percentage_of_time_of_each_window
+from PytrackUtils.Helpers.webbrowser_helper import go_to_link_github, go_to_link_twitter, go_to_link_youtube_channel, go_to_link_youtube_video
 from PytrackUtils.Helpers.stylesheet_helper import change_stylesheet, get_themes
 from PytrackUtils.Helpers.config_helper import edit_config, read_config
 from PytrackUtils.Helpers.database_helper import clear_window_history, clear_window_settings
+from PytrackUtils.point_tracker import PointTracker
 from PytrackUtils.SystemTray.pytrack_system_tray import setup_system_tray
+from PytrackUtils.pytrack import PyTrack 
 
-from PytrackUtils.PyTrackWorker import PyTrackWorker
 
-import sys
-
-class PytrackMainWindow(QMainWindow, Ui_MainWindow):
+class App(QMainWindow, Ui_MainWindow):
     main_loop_active : bool
-    pytrack_worker : PyTrackWorker
+    pytrack_worker : PyTrack
+    point_tracker : PointTracker
     main_loop_activated: bool
 
     def __init__(self) -> None:
@@ -33,7 +35,11 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle("Pytrack")
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)  # type: ignore
 
-        self.pytrack_worker = PyTrackWorker(self)
+        self.pytrack_worker = PyTrack(self)
+        self.point_tracker = PointTracker()
+
+        self.pytrack_worker.points_changed.connect(self.point_tracker.change_points)
+        self.pytrack_worker.points_changed.connect(lambda x, y: self.label_points_home.setText(self.point_tracker.__str__()))
 
         self.main_loop_active = False
 
@@ -56,8 +62,8 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
     def place_holder_text_init(self):
         # setting text and placeholder texts
         self.button_activate_deactivate_main_loop.setText("Activate")
-        self.line_edit_point_threshold_break.setPlaceholderText(str(self.pytrack_worker.point_tracker.threshold_break))
-        self.line_edit_point_threshold_warning.setPlaceholderText(str(self.pytrack_worker.point_tracker.threshold_warning))
+        self.line_edit_point_threshold_break.setPlaceholderText(str(self.point_tracker.threshold_break))
+        self.line_edit_point_threshold_warning.setPlaceholderText(str(self.point_tracker.threshold_warning))
 
     def combo_box_items_init(self):
         # set combo box items
@@ -72,7 +78,7 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
     def charts_init(self):
         # set Charts
         self.point_line_series = QLineSeries()
-        self.point_line_series.append(0, self.pytrack_worker.point_tracker.points / 10)
+        self.point_line_series.append(0, self.point_tracker.points / 10)
         chart = QChart()
         chart.addSeries(self.point_line_series)
         chart.setTitle("Points Over Time")
@@ -145,7 +151,7 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
             query_type: (string) type to query ex. good, bad, all"""
 
         print("getting records")
-        records: list[WindowRecord] = []
+        records: list[Window] = []
         fetcher = WindowRecordFetcher()
         dates = fetcher.get_dates(query_date)
         raw_records = fetcher.retrieve_all_raw_records_by_many_dates(dates) 
@@ -248,7 +254,7 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
 
     def add_point_to_graph(self):
         count = self.point_line_series.count()
-        points = self.pytrack_worker.point_tracker.points / 10  # points divided by 10
+        points = self.point_tracker.points / 10  # points divided by 10
         self.point_line_series.append(count, points)
         self.update_chart_view()
         print(f"adding points: {count}, {points}")
@@ -259,7 +265,7 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
         chart.setTitle("Points Over Time")
         self.chart_view.setChart(chart)
 
-    def update_scroll_area_contents(self, records: list[WindowRecord]):
+    def update_scroll_area_contents(self, records: list[Window]):
         """Updates the scroll area contents by the list of window records that is passed
 
         Parameters:
@@ -272,16 +278,16 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
         print("updating contents")
         for record in records:
             obj = Ui_Window_Record()
-            obj.label_name.setText(record.window_short_name)
-            obj.label_total_time.setText(str(record.window_time_elapsed.get_time()))
-            obj.progressBar.setValue(int(record.window_time_elapsed.percentage))
+            obj.label_name.setText(record.short_name)
+            obj.label_total_time.setText(str(record.time_elapsed.get_time()))
+            obj.progressBar.setValue(int(record.time_elapsed.percentage))
 
             self.scroll_area_contents_layout.addWidget(obj)
             self.scroll_area_contents_layout.setAlignment(obj, Qt.AlignmentFlag.AlignTop)
 
     def add_windows(self):
         """this function spawns add window ui in the add ui scroll area"""
-        window_filter = WindowFilter(pygetwindow.getAllWindows())
+        window_filter = Win32Filter(pygetwindow.getAllWindows())
         window_filter.full_filter()
 
         # clear the add window contents layout
@@ -311,7 +317,7 @@ class PytrackMainWindow(QMainWindow, Ui_MainWindow):
 
 if __name__ == "__main__":
     app = QApplication()
-    window = PytrackMainWindow()
+    window = App()
 
     app.setQuitOnLastWindowClosed(False)
     

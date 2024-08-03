@@ -1,5 +1,6 @@
-from .Helpers.notification_helper import NotificationManager
-from .WindowUtils.window_type import WindowType
+from PySide6.QtCore import Slot
+
+from .Helpers.notification_helper import notify_break, notify_back_to_work 
 import configparser
 
 
@@ -10,6 +11,7 @@ class PointTracker:
         self.read_settings_config_file()
         self.points = self.starting_points
 
+    @Slot()
     def change_points(self, window_type, window_points):
         """add and subtracts points based on app type. \n"""
 
@@ -21,6 +23,9 @@ class PointTracker:
             print(f"subtract {window_points} points\ntotal points: {self.points}")
         else:
             print("this window does not have a label")
+        
+        self.check_point_threshold()
+        print(self)
 
     def check_point_threshold(self):
         """check point threshold. \n
@@ -28,11 +33,9 @@ class PointTracker:
         self.read_settings_config_file()
 
         if self.points >= self.threshold_break:
-            notification_manager = NotificationManager()
-            notification_manager.take_a_break()
+            notify_break()
         if self.points <= self.threshold_warning:
-            notification_manager = NotificationManager()
-            notification_manager.get_back_to_work()
+            notify_back_to_work()
 
     def read_settings_config_file(self):
         config_parser = configparser.ConfigParser()

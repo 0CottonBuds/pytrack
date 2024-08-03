@@ -1,15 +1,16 @@
 import pygetwindow as gw
 import datetime as dt
 
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 
 from PytrackUtils.Helpers.database_helper import record_window_time 
 from PytrackUtils.point_tracker import PointTracker 
 from PytrackUtils.WindowUtils.window_type import WindowType
 
-class PyTrackWorker(QObject):
+class PyTrack(QObject):
     time_started: tuple
     time_finished: tuple
+    points_changed: Signal = Signal(str, int)
 
     def __init__(self, main_window):
         super().__init__()
@@ -19,7 +20,6 @@ class PyTrackWorker(QObject):
         self.last_active_window = None
         self.time_started = self.get_time_now()
         self.time_finished = (0, 0, 0)
-        self.point_tracker = PointTracker()
 
     def main_loop(self):
         self.current_active_window = gw.getActiveWindow()
@@ -27,22 +27,19 @@ class PyTrackWorker(QObject):
         if self.last_active_window is None:
             self.last_active_window = self.current_active_window
 
+        # this is a loop so every time we loop we consider that this is the time finished
         self.time_finished = self.get_time_now() 
 
-        # check app type
         window = WindowType()
         window.check_app_type(self.current_active_window.title)
 
-        # change points
-        self.point_tracker.change_points(window.window_type, window.window_rating)
-        self.point_tracker.check_point_threshold()
+        # we emit so point tracker on App class can change points and ui label to change
+        self.points_changed.emit(window.window_type, window.window_rating)
 
         print(f"Active Window: {window}")
-        print(self.point_tracker)
-        self.main_window.label_points_home.setText(str(self.point_tracker))
 
-        """checks if window changed if it changes it records the data to the
-        database if all prerequisite parameters exists"""
+        # checks if window changed if it changes it records the data to the
+        # database if all prerequisite parameters exists
         is_window_changed = self.current_active_window != self.last_active_window
         if is_window_changed:
             self.last_active_window = self.current_active_window
@@ -54,11 +51,11 @@ class PyTrackWorker(QObject):
                 self.last_active_window is not None
             )
             if is_parameters_complete:
-                record_window_time(self.last_active_window.title, self.get_total_elapsed_time())
+                record_window_time(self.last_active_window.title, self.get_total_window_time())
 
-        print(self.get_total_elapsed_time())
+        print(self.get_total_window_time())
 
-    def get_total_elapsed_time(self) -> tuple:
+    def get_total_window_time(self) -> tuple:
         """function to subtract two time(hours, minutes, seconds)\n
         returns tuple(Hours, Minutes, Seconds)\n
         check TODO to see bugs"""
@@ -83,5 +80,4 @@ class PyTrackWorker(QObject):
     def get_time_now(self):
         time_now = dt.datetime.now()
         return (time_now.hour, time_now.minute, time_now.second)
-
 
