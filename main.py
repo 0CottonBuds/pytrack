@@ -12,7 +12,7 @@ from GUI.WindowRecordUi.window_record import Ui_Window_Record
 from GUI.AddWindowUi.add_window import UiAddWindow
 
 from PytrackLibs.window import Window
-from PytrackLibs.win_32_filter import Win32Filter
+from PytrackLibs.pygetwindow_filter import PygetwindowFilter
 from PytrackLibs.window_fetcher import WindowFetcher, get_time_of_each_window, get_percentage_of_time_of_each_window
 from PytrackLibs.point_tracker import PointTracker
 from PytrackLibs.pytrack import PyTrack 
@@ -243,7 +243,7 @@ class App(QMainWindow, Ui_MainWindow):
         for record in records:
             obj = Ui_Window_Record()
             obj.label_name.setText(record.short_name)
-            obj.label_total_time.setText(str(record.time_elapsed.get_time()))
+            obj.label_total_time.setText(str(record.time_elapsed.to_tuple()))
             obj.progressBar.setValue(int(record.time_elapsed.percentage))
 
             self.scroll_area_contents_layout.addWidget(obj)
@@ -251,7 +251,7 @@ class App(QMainWindow, Ui_MainWindow):
 
     def add_windows(self):
         """this function spawns add window ui in the add ui scroll area"""
-        window_filter = Win32Filter(pygetwindow.getAllWindows())
+        window_filter = PygetwindowFilter(pygetwindow.getAllWindows())
         window_filter.full_filter()
 
         # clear the add window contents layout

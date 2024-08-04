@@ -4,7 +4,7 @@ import datetime as dt
 from PySide6.QtCore import QObject, Signal
 
 from Helpers.database_helper import record_window_time 
-from PytrackLibs.window import Window, check_app_type
+from PytrackLibs.window import Window, get_window_by_name
 
 class PyTrack(QObject):
     time_started: tuple
@@ -30,7 +30,7 @@ class PyTrack(QObject):
         self.time_finished = self.get_time_now() 
 
         window = Window()
-        window = check_app_type(self.current_active_window.title)
+        window = get_window_by_name(self.current_active_window.title)
 
         # we emit so point tracker on App class can change points and ui label to change
         self.points_changed.emit(window.type, window.rating)
