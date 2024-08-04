@@ -11,9 +11,9 @@ from GUI.Main.main_ui import Ui_MainWindow
 from GUI.WindowRecordUi.window_record import Ui_Window_Record
 from GUI.AddWindowUi.add_window import UiAddWindow
 
-from PytrackLibs.window import Window, WindowFetcher
+from PytrackLibs.window import Window
 from PytrackLibs.win_32_filter import Win32Filter
-from PytrackLibs.window import get_time_of_each_window, get_percentage_of_time_of_each_window
+from PytrackLibs.window_fetcher import WindowFetcher, get_time_of_each_window, get_percentage_of_time_of_each_window
 from PytrackLibs.point_tracker import PointTracker
 from PytrackLibs.pytrack import PyTrack 
 
