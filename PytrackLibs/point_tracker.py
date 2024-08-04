@@ -5,15 +5,16 @@ from Helpers.config_helper import read_config
 
 
 class PointTracker:
+    """Tracks points and calls notifications when threshold is met"""
     points: int
 
     def __init__(self) -> None:
-        self.read_settings_config_file()
+        self.config_file_read_points_settings()
         self.points = self.starting_points
 
     @Slot()
     def change_points(self, window_type, window_points):
-        """add and subtracts points based on app type. \n"""
+        """add and subtracts points based on window type. \n"""
 
         if window_type == "good":
             self.points += window_points
@@ -28,20 +29,18 @@ class PointTracker:
         print(self)
 
     def check_point_threshold(self):
-        """check point threshold. \n
-        calls the notification module to fire notification when threshold is reached."""
-        self.read_settings_config_file()
+        self.config_file_read_points_settings()
 
-        if self.points >= self.threshold_break:
+        if self.points >= self.break_threshold:
             notify_break()
-        if self.points <= self.threshold_warning:
+        if self.points <= self.warning_threshold:
             notify_back_to_work()
 
-    def read_settings_config_file(self):
+    def config_file_read_points_settings(self):
         
         self.starting_points = int(read_config(r"./config.ini", "App", "starting_points" ))
-        self.threshold_warning = int(read_config(r"./config.ini", "App", "starting_points" ))  # type: ignore
-        self.threshold_break = int(read_config(r"./config.ini", "App", "starting_points" ))
+        self.warning_threshold = int(read_config(r"./config.ini", "App", "warning_threshold" ))  # type: ignore
+        self.break_threshold = int(read_config(r"./config.ini", "App", "break_threshold" ))
 
     def __str__(self) -> str:
         return f"Points: {self.points}"

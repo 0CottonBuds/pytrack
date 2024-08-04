@@ -1,10 +1,11 @@
 import datetime as dt
 
 from PytrackLibs.window import Window, WindowTimeElapsed, get_window_by_name
-from Helpers.database_helper import find_raw_window_time_entries_by_date
+from Helpers.database_helper import db_find_raw_window_time_entries_by_date
+
+"""responsible for using database helper functions to get raw window data and serialize them to Window objects"""
 
 def format_windows(raw_windows: list) -> list[Window]:
-    """Method for formatting windows as `Windowwindow` objects"""
     formatted_windows = []
     for entry in raw_windows:
         window = Window(entry)
@@ -14,13 +15,13 @@ def format_windows(raw_windows: list) -> list[Window]:
         formatted_windows.append(window)
     return formatted_windows
 
-def filter_formatted_windows_by_type(query_type: str, formatted_windows: list[Window]) -> list[Window]:
+def filter_windows_by_type(query_type: str, formatted_windows: list[Window]) -> list[Window]:
     """
     Parameters:
-    query_type: (string) the type you want to query
+        query_type : str = the type you want to query
 
     Return:
-    returns a list of filtered Window objects
+        list[Window] = filtered windows
     """
     filtered_formatted_windows: list[Window] = []
     if query_type == "all":
@@ -32,10 +33,10 @@ def filter_formatted_windows_by_type(query_type: str, formatted_windows: list[Wi
 
     return filtered_formatted_windows
 
-def retrieve_all_raw_windows_by_many_dates(dates: list[str]) -> list:
+def get_all_raw_windows_by_dates(dates: list[str]) -> list:
     raw_windows = []
     for date in dates:
-        curr_windows = find_raw_window_time_entries_by_date(date) 
+        curr_windows = db_find_raw_window_time_entries_by_date(date) 
         raw_windows.extend(curr_windows)
     return raw_windows
 
@@ -105,61 +106,58 @@ def get_dates(query: str = "today") -> list:
 
     return list_of_dates
 
-def get_total_time_elapsed(formatted_windows: list[Window]) -> WindowTimeElapsed:
-    """Calculate the total time elapsed.
 
-    Args:
-        formatted_windows: A list of window windows.
 
-    Returns:
-        The total time elapsed as a WindowTimeElapsed object.
-    """
-    total_time = WindowTimeElapsed(f"0, 0, 0")
 
-    for entry in formatted_windows:
-        total_time += entry.time_elapsed
-    return total_time
+#TODO: move to other file
 
-def get_time_of_each_window(
+
+def get_total_elapsed_time_of_windows(
     formatted_windows: list[Window],
 ) -> list[Window]:
-    """get time elapsed on each window"""
+    """
+    Parameters:
+        formatted_windows: list[Window] = list of windows with duplicates with same name
+
+    Returns:
+        list[Window] = combines windows with the same name and adds their elapsed time
+    """
     unique_windows: list[Window] = []
 
-    for entry in formatted_windows:
+    for window in formatted_windows:
 
         is_unique: bool = True
-        for window in unique_windows:
-            if window.short_name == entry.short_name:
+        for unique_window in unique_windows:
+            if unique_window.short_name == window.short_name:
                 is_unique = False
-                window.time_elapsed += entry.time_elapsed
+                unique_window.time_elapsed += window.time_elapsed
         if is_unique:
-            unique_window = entry
-            unique_windows.append(unique_window)
+            unique_windows.append(window)
 
     return unique_windows
 
-def get_percentage_of_time_of_each_window(
+def get_time_percentage_of_windows(
     formatted_windows: list[Window],
 ) -> list[Window]:
     """
-    Calculates the percentage of time spent on each window and adds this information to the list of window windows.
-
     Parameters:
-        formatted_windows (List[Windowwindow]): A list of window windows containing information about the time spent on each window.
+        formatted_windows : List[Window] = A list of window with elapsed times.
 
     Returns:
-        List[Windowwindow]: A list of window windows with the percentage of time spent on each window added.
+        List[Window]: modified formatted_windows with percentage.
     """
-    total_time: WindowTimeElapsed = get_total_time_elapsed(formatted_windows)
-    time_of_each_window: list[Window] = get_time_of_each_window(formatted_windows)
+
+    total_time = WindowTimeElapsed(f"0, 0, 0")
+    for entry in formatted_windows:
+        total_time += entry.time_elapsed
 
     total_time_in_seconds = total_time.hours * 3600
     total_time_in_seconds += total_time.minutes * 60
     total_time_in_seconds += total_time.seconds
 
-    percentages: list[Window] = []  # this will be the returned list
+    time_of_each_window: list[Window] = get_total_elapsed_time_of_windows(formatted_windows)
 
+    windows_with_percentages: list[Window] = []
     for window in time_of_each_window:
         percentage = 0
 
@@ -172,7 +170,7 @@ def get_percentage_of_time_of_each_window(
 
         window.time_elapsed.percentage = round(percentage, 2)
 
-        percentages.append(window)
+        windows_with_percentages.append(window)
 
-    return percentages
+    return windows_with_percentages
 

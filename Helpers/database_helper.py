@@ -1,14 +1,6 @@
 import sqlite3
+import datetime as dt
 
-
-def cursor_execute(command:str, args: tuple):
-    conn = sqlite3.connect("pyTrack.db")
-    c = conn.cursor()
-
-    c.execute(command, args,)
-
-    conn.commit()
-    conn.close()
 
 def truncate_table(table:str):
     conn = sqlite3.connect("pyTrack.db")
@@ -25,10 +17,8 @@ def clear_window_history():
 def clear_window_settings():
     truncate_table("windowTypes")
 
-def record_window_time(window_name, time_elapsed):
-    """enter the data to data base"""
-    import datetime as dt
-
+def db_add_window_time(window_name, time_elapsed):
+    """sql query to record window name and its elapsed time"""
     conn = sqlite3.connect("pyTrack.db")
 
     c = conn.cursor()
@@ -51,8 +41,7 @@ def record_window_time(window_name, time_elapsed):
 
     print("successfully added to database")
 
-def record_window_type(window):
-    """enter the data to data base"""
+def db_add_window_type(window):
     conn = sqlite3.connect("pyTrack.db")
     c = conn.cursor()
 
@@ -67,7 +56,7 @@ def record_window_type(window):
     conn.close()
     print("successfully added to database")
 
-def find_window_on_database_by_name(query_name: str):
+def db_find_window_by_name(query_name: str):
     """find window on data base by name returns windowType object"""
 
     from PytrackLibs.window import Window #imported here to prevent circular dependency
@@ -94,7 +83,7 @@ def find_window_on_database_by_name(query_name: str):
         conn.close()
         return None
 
-def find_raw_window_time_entries_by_date(date: str) -> list:
+def db_find_raw_window_time_entries_by_date(date: str) -> list:
     """Method for retrieving raw windows from the database by date"""
     conn = sqlite3.connect("pyTrack.db")
     c = conn.cursor()

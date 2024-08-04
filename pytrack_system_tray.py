@@ -21,7 +21,7 @@ def setup_system_tray(app: QApplication, pytrack_main_window):
     # Create the menu
     menu = QMenu()
     activate_deactivate_main_loop_action = QAction(f"{pytrack_main_window.button_activate_deactivate_main_loop.text()} main loop")
-    activate_deactivate_main_loop_action.triggered.connect(pytrack_main_window.activate_deactivate_main_loop)
+    activate_deactivate_main_loop_action.triggered.connect(pytrack_main_window.main_loop_switch)
     menu.addAction(activate_deactivate_main_loop_action)
 
     # Add a Quit option to the menu.

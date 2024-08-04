@@ -1,4 +1,4 @@
-from Helpers.database_helper import find_window_on_database_by_name
+from Helpers.database_helper import db_find_window_by_name
 
 
 class Window:
@@ -75,7 +75,7 @@ def get_window_by_name(window_name : str) -> Window:
     separated_window_name = window_name.split("- ")
 
     for slice in separated_window_name:
-        window = find_window_on_database_by_name(slice)
+        window = db_find_window_by_name(slice)
 
         if window != None:
             return window

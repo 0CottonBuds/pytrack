@@ -1,27 +1,23 @@
-from Helpers.database_helper import find_window_on_database_by_name
+from Helpers.database_helper import db_find_window_by_name
 
-"""This is responsible for filtering the return value of pygetwindow."""
 
 class PygetwindowFilter:
-    '''WindowFilter class is used for filtering WindowType class entries on the database see WindowType's documentation.'''
+    """Responsible for filtering the return value of pygetwindow.getAllWindows()"""
     def __init__(self, windows) -> None:
         self.windows = windows
 
     def full_filter(self):
-        """uses all the filter in the class"""
+        self.windows = self.remove_ignored_windows()
+        self.windows = self.remove_windows_that_are_on_database()
 
-        self.filter_ignored_windows()
-        self.filter_windows_that_are_on_database()
-
-    def filter_windows_that_are_on_database(self):
-        """cycles to the list of windows(Input) and checks if there is an entry of that window"""
+    def remove_windows_that_are_on_database(self):
         filtered_windows = []
 
         for window in self.windows:
             splitted_name = window.title.split("- ")
             is_unique = False
             for part in splitted_name:
-                result = find_window_on_database_by_name(part)
+                result = db_find_window_by_name(part)
                 if result == None:
                     is_unique = True
                     pass
@@ -31,10 +27,9 @@ class PygetwindowFilter:
             if is_unique:
                 filtered_windows.append(window)
 
-        self.windows = filtered_windows
         return filtered_windows
 
-    def filter_ignored_windows(self) -> list:
+    def remove_ignored_windows(self) -> list:
         """filters the windows that you want to ignore and returns a list of windows"""
         filtered_windows = []
         ignored_window_names = [
@@ -56,6 +51,5 @@ class PygetwindowFilter:
             else:
                 filtered_windows.append(window)
 
-        self.windows = filtered_windows
         return filtered_windows
 

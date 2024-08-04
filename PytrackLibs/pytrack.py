@@ -3,7 +3,7 @@ import datetime as dt
 
 from PySide6.QtCore import QObject, Signal
 
-from Helpers.database_helper import record_window_time 
+from Helpers.database_helper import db_add_window_time 
 from PytrackLibs.window import Window, get_window_by_name
 
 class PyTrack(QObject):
@@ -47,7 +47,7 @@ class PyTrack(QObject):
                 self.last_active_window is not None
             )
             if is_parameters_complete:
-                record_window_time(self.last_active_window.title, self.get_total_window_time())
+                db_add_window_time(self.last_active_window.title, self.get_total_window_time())
 
             # this is here cuz we need to record window time fisst before altering the time start
             self.last_active_window = self.current_active_window

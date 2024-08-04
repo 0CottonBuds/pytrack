@@ -4,9 +4,9 @@ from Helpers.config_helper import read_config
 def change_stylesheet(object, theme: str, app:QApplication):
     '''Changes the stylesheet of Qapplication.
     Params:
-        object any: Target object 
-        style str: Theme to use.
-        app : QApplication = Application object that you want to apply the stylesheet.
+        object: any = Target object 
+        style : str = Theme to use.
+        app : QApplication = QApplication object that you want to apply the stylesheet.
     '''
     _theme = open(f"Assets/Themes/{theme}_theme.css","r").read()
     app.setStyleSheet(_theme)

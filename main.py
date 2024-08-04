@@ -13,7 +13,7 @@ from GUI.AddWindowUi.add_window import UiAddWindow
 
 from PytrackLibs.window import Window
 from PytrackLibs.pygetwindow_filter import PygetwindowFilter
-from PytrackLibs.window_fetcher import format_windows, filter_formatted_windows_by_type, retrieve_all_raw_windows_by_many_dates, get_dates, get_time_of_each_window, get_percentage_of_time_of_each_window
+from PytrackLibs.window_fetcher import format_windows, filter_windows_by_type, get_all_raw_windows_by_dates, get_dates, get_total_elapsed_time_of_windows, get_time_percentage_of_windows
 from PytrackLibs.point_tracker import PointTracker
 from PytrackLibs.pytrack import PyTrack 
 
@@ -61,13 +61,11 @@ class App(QMainWindow, Ui_MainWindow):
     ###INIT FUNCTIONS ###
 
     def place_holder_text_init(self):
-        # setting text and placeholder texts
         self.button_activate_deactivate_main_loop.setText("Activate")
-        self.line_edit_point_threshold_break.setPlaceholderText(str(self.point_tracker.threshold_break))
-        self.line_edit_point_threshold_warning.setPlaceholderText(str(self.point_tracker.threshold_warning))
+        self.line_edit_point_threshold_break.setPlaceholderText(str(self.point_tracker.break_threshold))
+        self.line_edit_point_threshold_warning.setPlaceholderText(str(self.point_tracker.warning_threshold))
 
     def combo_box_items_init(self):
-        # set combo box items
         combo_box_date_items = ["today", "yesterday", "this week", "this month", "all"]
         self.comboBox_date.addItems(combo_box_date_items)
         combo_box_type_items = ["all", "bad", "good"]
@@ -77,7 +75,6 @@ class App(QMainWindow, Ui_MainWindow):
         self.comboBox_theme.addItems(combo_box_theme_items)
     
     def charts_init(self):
-        # set Charts
         self.point_line_series = QLineSeries()
         self.point_line_series.append(0, self.point_tracker.points / 10)
         chart = QChart()
@@ -89,134 +86,106 @@ class App(QMainWindow, Ui_MainWindow):
         self.point_graph_container_layout.addWidget(self.chart_view)
 
     def timers_init(self):
-        # set timers
         self.main_loop_timer = QTimer()
         self.point_graph_timer = QTimer()
 
-        # set timer signals to slots
         self.main_loop_timer.timeout.connect(self.pytrack_worker.main_loop)  # type: ignore
-        self.point_graph_timer.timeout.connect(self.add_point_to_graph)
+        self.point_graph_timer.timeout.connect(self.add_point_to_point_chart)
 
     def buttons_init(self):
-        # setting the button signals to slots
-        self.button_go_to_home.clicked.connect(self.go_to_home_page)  # type: ignore
-        self.button_go_to_analytics.clicked.connect(self.go_to_analytics_page)  # type: ignore
-        self.button_go_to_settings.clicked.connect(self.go_to_settings_page)  # type: ignore
-        self.button_activate_deactivate_main_loop.clicked.connect(self.activate_deactivate_main_loop)  # type: ignore
-        self.button_settings_general.clicked.connect(self.go_to_settings_general)  # type: ignore
-        self.button_settings_window.clicked.connect(self.go_to_settings_window)  # type: ignore
-        self.button_settings_about.clicked.connect(self.go_to_settings_about)  # type: ignore
+        self.button_activate_deactivate_main_loop.clicked.connect(self.main_loop_switch)  # type: ignore
+
+        self.button_go_to_home.clicked.connect( lambda: self.stackedWidget.setCurrentWidget(self.page_home))  # type: ignore
+        self.button_go_to_analytics.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.page_analytics))  # type: ignore
+        self.button_go_to_settings.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.page_settings))  # type: ignore
+        self.button_settings_general.clicked.connect(lambda: self.page_settings_stacked_widget.setCurrentWidget(self.page_settings_stacked_widget_page_general))  # type: ignore
+        self.button_settings_window.clicked.connect(lambda: self.page_settings_stacked_widget.setCurrentWidget(self.page_settings_stacked_widget_page_window))  # type: ignore
+        self.button_settings_about.clicked.connect(lambda: self.page_settings_stacked_widget.setCurrentWidget(self.page_settings_stacked_widget_page_about))  # type: ignore
+
         self.button_link_to_twitter.clicked.connect(go_to_link_twitter)  # type: ignore
         self.button_link_to_github.clicked.connect(go_to_link_github)  # type: ignore
         self.button_link_to_youtube_video.clicked.connect(go_to_link_youtube_video)  # type: ignore
         self.button_link_to_youtube_channel.clicked.connect(go_to_link_youtube_channel)  # type: ignore
         self.button_link_to_github_repository.clicked.connect(go_to_link_github_repository)  # type: ignore
-        self.button_add_windows.clicked.connect(self.add_windows)  # type: ignore
-        self.button_exit.clicked.connect(lambda q: sys.exit())
-        self.button_minimize.clicked.connect(lambda m: self.showMinimized())
+
+        self.button_add_windows.clicked.connect(self.create_add_window_ui)  # type: ignore
         self.button_clear_window_history.clicked.connect(clear_window_history)
         self.button_clear_window_settings.clicked.connect(clear_window_settings)
 
+        self.button_exit.clicked.connect(lambda q: sys.exit())
+        self.button_minimize.clicked.connect(lambda m: self.showMinimized())
+
     def text_edit_init(self):
         # setting the text edit signals to slots
-        self.line_edit_point_threshold_break.editingFinished.connect(self.edit_point_threshold_break)  # type: ignore
-        self.line_edit_point_threshold_warning.editingFinished.connect(self.edit_point_threshold_warning)  # type: ignore
+        self.line_edit_point_threshold_break.editingFinished.connect(self.edit_break_threshold_points)  # type: ignore
+        self.line_edit_point_threshold_warning.editingFinished.connect(self.edit_warning_threshold_points)  # type: ignore
 
     def combo_box_signals_init(self):
         # set combo box signals to slots
-        self.comboBox_date.currentTextChanged.connect(self.combo_box_date_updates)  # type: ignore
-        self.comboBox_type.currentTextChanged.connect(self.combo_box_type_updates)  # type: ignore
-        self.comboBox_theme.currentTextChanged.connect(self.combo_box_theme_updates) # type: ignore
-
-    ### NAVIGATION FUNCTIONS ###
-
-    def go_to_home_page(self):
-        print("to home page")
-        self.stackedWidget.setCurrentWidget(self.page_home)
-
-    def go_to_analytics_page(self):
-        print("to analytics page")
-        self.stackedWidget.setCurrentWidget(self.page_analytics)
-
-    def go_to_settings_page(self):
-        print("go to settings page")
-        self.stackedWidget.setCurrentWidget(self.page_settings)
-
-    def go_to_settings_general(self):
-        print("go to general settings")
-        self.page_settings_stacked_widget.setCurrentWidget(self.page_settings_stacked_widget_page_general)
-
-    def go_to_settings_window(self):
-        print("go to window settings")
-        self.page_settings_stacked_widget.setCurrentWidget(self.page_settings_stacked_widget_page_window)
-
-    def go_to_settings_about(self):
-        print("go to about settings")
-        self.page_settings_stacked_widget.setCurrentWidget(self.page_settings_stacked_widget_page_about)
+        self.comboBox_date.currentTextChanged.connect(self.on_date_combo_box_update)  # type: ignore
+        self.comboBox_type.currentTextChanged.connect(self.on_typecombo_box_update)  # type: ignore
+        self.comboBox_theme.currentTextChanged.connect(self.on_theme_combo_box_update) # type: ignore
 
     ### CONFIG FUNCTIONS ###
 
-    def edit_point_threshold_break(self):
-        """edit the point threshold of break"""
+    def edit_break_threshold_points(self):
 
         value = self.line_edit_point_threshold_break.text()
         if value == "":
-            value: str = str(self.pytrack_worker.point_tracker.threshold_break)  # type: ignore bypass formatting
+            value: str = str(self.point_tracker.break_threshold)  # type: ignore bypass formatting
 
         if value.isnumeric():
             print(f"changing point threshold for break to {value}")
 
             edit_config("./config.ini", "App", "break_threshold", value)
-            self.pytrack_worker.point_tracker.read_settings_config_file()
+            self.point_tracker.config_file_read_points_settings()
 
             # Set line edit placeholder text.
-            self.line_edit_point_threshold_break.setPlaceholderText(str(self.pytrack_worker.point_tracker.threshold_break))
+            self.line_edit_point_threshold_break.setPlaceholderText(str(self.point_tracker.break_threshold))
             self.line_edit_point_threshold_break.clear()
         else:
             print(f"tried to input {value} but it is not numeric.")
 
             # Set line edit placeholder text.
-            self.line_edit_point_threshold_break.setPlaceholderText(str(self.pytrack_worker.point_tracker.threshold_break))
+            self.line_edit_point_threshold_break.setPlaceholderText(str(self.point_tracker.break_threshold))
             self.line_edit_point_threshold_break.clear()
 
-    def edit_point_threshold_warning(self):
-        """edit the point threshold of warning"""
-
+    def edit_warning_threshold_points(self):
         value: str = self.line_edit_point_threshold_warning.text()
         if value == "":
-            value = str(self.pytrack_worker.point_tracker.threshold_warning)  # type: ignore bypass formatting
+            value = str(self.point_tracker.warning_threshold)  # type: ignore bypass formatting
 
         if value.isnumeric():
             print(f"changing point threshold for warning to {value}")
 
             edit_config("./config.ini", "App", "warning_threshold", value)
-            self.pytrack_worker.point_tracker.read_settings_config_file()
+            self.point_tracker.config_file_read_points_settings()
 
             # Set line edit placeholder text.
-            self.line_edit_point_threshold_warning.setPlaceholderText(str(self.pytrack_worker.point_tracker.threshold_warning))
+            self.line_edit_point_threshold_warning.setPlaceholderText(str(self.point_tracker.warning_threshold))
             self.line_edit_point_threshold_warning.clear()
         else:
             print(f"tried to input {value} but it is not numeric.")
 
             # Set line edit placeholder text.
-            self.line_edit_point_threshold_warning.setPlaceholderText(str(self.pytrack_worker.point_tracker.threshold_warning))
+            self.line_edit_point_threshold_warning.setPlaceholderText(str(self.point_tracker.warning_threshold))
             self.line_edit_point_threshold_warning.clear()
 
     ### UI FUNCTIONS ###
 
-    def combo_box_date_updates(self, text):
+    def on_date_combo_box_update(self, text):
         print(f"signal: {text}")
         self.get_records(self.comboBox_date.currentText(), self.comboBox_type.currentText())
 
-    def combo_box_type_updates(self, text):
+    def on_typecombo_box_update(self, text):
         print(f"signal: {text}")
         self.get_records(self.comboBox_date.currentText(), self.comboBox_type.currentText())
 
-    def combo_box_theme_updates(self, text):
+    def on_theme_combo_box_update(self, text):
         change_stylesheet(self, text, app)
         edit_config("config.ini", "App", "theme", text)
 
-    def add_point_to_graph(self):
+    def add_point_to_point_chart(self):
         count = self.point_line_series.count()
         points = self.point_tracker.points / 10  # points divided by 10
         self.point_line_series.append(count, points)
@@ -229,18 +198,17 @@ class App(QMainWindow, Ui_MainWindow):
         chart.setTitle("Points Over Time")
         self.chart_view.setChart(chart)
 
-    def update_scroll_area_contents(self, records: list[Window]):
-        """Updates the scroll area contents by the list of window records that is passed
-
+    def update_window_time_history(self, windows: list[Window]):
+        """        
         Parameters:
-            records: (list[WindowRecord]) list of window records that contains the data to update the contents of the scroll area"""
+            records: list[WindowRecord] = list of windows"""
 
         # clears the scroll area
         for i in reversed(range(self.scroll_area_contents_layout.count())):
             self.scroll_area_contents_layout.itemAt(i).widget().setParent(None)  # type: ignore
 
         print("updating contents")
-        for record in records:
+        for record in windows:
             obj = Ui_Window_Record()
             obj.label_name.setText(record.short_name)
             obj.label_total_time.setText(str(record.time_elapsed.to_tuple()))
@@ -249,8 +217,8 @@ class App(QMainWindow, Ui_MainWindow):
             self.scroll_area_contents_layout.addWidget(obj)
             self.scroll_area_contents_layout.setAlignment(obj, Qt.AlignmentFlag.AlignTop)
 
-    def add_windows(self):
-        """this function spawns add window ui in the add ui scroll area"""
+    def create_add_window_ui(self):
+        """Creates UIAddWindow"""
         window_filter = PygetwindowFilter(pygetwindow.getAllWindows())
         window_filter.full_filter()
 
@@ -264,7 +232,7 @@ class App(QMainWindow, Ui_MainWindow):
 
     ### PYTRACK FUNCTIONS ###
     
-    def activate_deactivate_main_loop(self):
+    def main_loop_switch(self):
         if not self.main_loop_active:
             print("Activated")
             self.main_loop_timer.start(5000)
@@ -279,27 +247,27 @@ class App(QMainWindow, Ui_MainWindow):
             self.button_activate_deactivate_main_loop.setText("Activate")
 
     def get_records(self, query_date: str, query_type: str):
-        """Fetches records by query date and type using the window record fetcher class and updates the scroll area contents
+        """Updates window time history based on query type
 
         Parameters:
-            query_date: (string) date to query ex. today, yesterday, etc
-            query_type: (string) type to query ex. good, bad, all"""
+            query_date: str = date to query ex. today, yesterday, etc
+            query_type: str = type to query ex. good, bad, all"""
 
         print("getting records")
         windows: list[Window] = []
         formatted_windows = []
 
         dates = get_dates(query_date)
-        raw_windows = retrieve_all_raw_windows_by_many_dates(dates) 
+        raw_windows = get_all_raw_windows_by_dates(dates) 
 
         formatted_windows = format_windows(raw_windows)
-        filtered_windows = filter_formatted_windows_by_type(query_type, formatted_windows)
+        filtered_windows = filter_windows_by_type(query_type, formatted_windows)
 
         windows = filtered_windows 
-        windows = get_time_of_each_window(windows)
-        windows = get_percentage_of_time_of_each_window(windows)
+        windows = get_total_elapsed_time_of_windows(windows)
+        windows = get_time_percentage_of_windows(windows)
 
-        self.update_scroll_area_contents(windows)
+        self.update_window_time_history(windows)
 
     ### WINDOW FUNCTIONS ###
 
