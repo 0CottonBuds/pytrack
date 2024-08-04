@@ -13,7 +13,7 @@ from GUI.AddWindowUi.add_window import UiAddWindow
 
 from PytrackLibs.window import Window
 from PytrackLibs.pygetwindow_filter import PygetwindowFilter
-from PytrackLibs.window_fetcher import WindowFetcher, get_time_of_each_window, get_percentage_of_time_of_each_window
+from PytrackLibs.window_fetcher import format_windows, filter_formatted_windows_by_type, retrieve_all_raw_windows_by_many_dates, get_dates, get_time_of_each_window, get_percentage_of_time_of_each_window
 from PytrackLibs.point_tracker import PointTracker
 from PytrackLibs.pytrack import PyTrack 
 
@@ -286,18 +286,20 @@ class App(QMainWindow, Ui_MainWindow):
             query_type: (string) type to query ex. good, bad, all"""
 
         print("getting records")
-        records: list[Window] = []
-        fetcher = WindowFetcher()
-        dates = fetcher.get_dates(query_date)
-        raw_records = fetcher.retrieve_all_raw_records_by_many_dates(dates) 
-        fetcher.format_records(raw_records)
-        fetcher.filter_formatted_records_by_type(query_type)
+        windows: list[Window] = []
+        formatted_windows = []
 
-        records = fetcher.formatted_records
-        records = get_time_of_each_window(records)
-        records = get_percentage_of_time_of_each_window(records)
+        dates = get_dates(query_date)
+        raw_windows = retrieve_all_raw_windows_by_many_dates(dates) 
 
-        self.update_scroll_area_contents(records)
+        formatted_windows = format_windows(raw_windows)
+        filtered_windows = filter_formatted_windows_by_type(query_type, formatted_windows)
+
+        windows = filtered_windows 
+        windows = get_time_of_each_window(windows)
+        windows = get_percentage_of_time_of_each_window(windows)
+
+        self.update_scroll_area_contents(windows)
 
     ### WINDOW FUNCTIONS ###
 
@@ -322,7 +324,7 @@ if __name__ == "__main__":
 
     app.setQuitOnLastWindowClosed(False)
     
-    system_tray_icon = QIcon("Icons\icon.ico")
+    system_tray_icon = QIcon("Assets\Icons\icon.ico")
 
     if QSystemTrayIcon.isSystemTrayAvailable():
         setup_system_tray(app, window)
