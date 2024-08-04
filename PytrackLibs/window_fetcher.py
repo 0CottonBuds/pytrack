@@ -1,24 +1,12 @@
 import sqlite3
 import datetime as dt
 
-from PytrackLibs.window import Window, WindowTime, check_app_type
+from PytrackLibs.window import Window, WindowTimeElapsed, get_window_by_name
 
 class WindowFetcher:
     """Class that fetches the data and formats it to a list of Window class"""
 
     formatted_records: list[Window] = []
-
-    def fetch_all_records(self):
-        """retrieves all records and formats it to a list of window classes"""
-        raw_records = self.retrieve_all_raw_records()
-        self.formatted_records = self.format_records(raw_records)
-        return self.formatted_records
-
-    def fetch_records_by_date(self, date: str):
-        """combination of format_raw_entries and retrieve_raw_entries as one function but with dates"""
-        raw_records = self.retrieve_all_raw_records_by_date(date)
-        self.formatted_records = self.format_records(raw_records)
-        return self.formatted_records
 
     def format_records(self, raw_records: list) -> list[Window]:
         """Method for formatting records as `WindowRecord` objects"""
@@ -26,7 +14,7 @@ class WindowFetcher:
         for entry in raw_records:
             record = Window(entry)
             record_type = Window()
-            record_type = check_app_type(record.name)
+            record_type = get_window_by_name(record.name)
             record.type = record_type.type
             formatted_records.append(record)
         self.formatted_records = formatted_records
@@ -55,18 +43,6 @@ class WindowFetcher:
         self.formatted_records = filtered_formatted_records
 
         return filtered_formatted_records
-
-    def retrieve_all_raw_records(self) -> list:
-        """Method for retrieving all raw records from the database"""
-        conn = sqlite3.connect("pyTrack.db")
-        c = conn.cursor()
-        c.execute("""CREATE TABLE IF NOT EXISTS windowTimeEntries(windowName text, timeElapsed text, date text)""")
-
-        c.execute("SELECT * FROM windowTimeEntries")
-        raw_records = c.fetchall()
-        conn.commit()
-        conn.close
-        return raw_records
 
     def retrieve_all_raw_records_by_date(self, date: str) -> list:
         """Method for retrieving raw records from the database by date"""
@@ -156,14 +132,8 @@ class WindowFetcher:
 
         return list_of_dates
 
-    def __str__(self) -> str:
-        message = ""
 
-        for records in self.formatted_records:
-            message += f"{records.name}, {records.time_elapsed.get_time()} \n"
-        return message
-
-def get_total_time_elapsed(formatted_records: list[Window]) -> WindowTime:
+def get_total_time_elapsed(formatted_records: list[Window]) -> WindowTimeElapsed:
     """Calculate the total time elapsed.
 
     Args:
@@ -172,7 +142,7 @@ def get_total_time_elapsed(formatted_records: list[Window]) -> WindowTime:
     Returns:
         The total time elapsed as a WindowTime object.
     """
-    total_time = WindowTime(f"0, 0, 0")
+    total_time = WindowTimeElapsed(f"0, 0, 0")
 
     # Iterate over the records and add the elapsed time for each record to the total time.
     for entry in formatted_records:
@@ -217,7 +187,7 @@ def get_percentage_of_time_of_each_window(
     Returns:
         List[WindowRecord]: A list of window records with the percentage of time spent on each window added.
     """
-    total_time: WindowTime = get_total_time_elapsed(formatted_records)
+    total_time: WindowTimeElapsed = get_total_time_elapsed(formatted_records)
     time_of_each_window: list[Window] = get_time_of_each_window(formatted_records)
 
     total_time_in_seconds = total_time.hours * 3600
