@@ -1,7 +1,7 @@
-import sqlite3
 import datetime as dt
 
 from PytrackLibs.window import Window, WindowTimeElapsed, get_window_by_name
+from Helpers.database_helper import find_raw_window_time_entries_by_date
 
 def format_windows(raw_windows: list) -> list[Window]:
     """Method for formatting windows as `Windowwindow` objects"""
@@ -32,22 +32,10 @@ def filter_formatted_windows_by_type(query_type: str, formatted_windows: list[Wi
 
     return filtered_formatted_windows
 
-def retrieve_all_raw_windows_by_date(date: str) -> list:
-    """Method for retrieving raw windows from the database by date"""
-    conn = sqlite3.connect("pyTrack.db")
-    c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS windowTimeEntries(windowName text, timeElapsed text, date text)""")
-
-    c.execute("SELECT * FROM windowTimeEntries WHERE date = ?", (date,))
-    raw_windows = c.fetchall()
-    conn.commit()
-    conn.close
-    return raw_windows
-
 def retrieve_all_raw_windows_by_many_dates(dates: list[str]) -> list:
     raw_windows = []
     for date in dates:
-        curr_windows = retrieve_all_raw_windows_by_date(date) 
+        curr_windows = find_raw_window_time_entries_by_date(date) 
         raw_windows.extend(curr_windows)
     return raw_windows
 

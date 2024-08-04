@@ -93,3 +93,16 @@ def find_window_on_database_by_name(query_name: str):
         conn.commit()
         conn.close()
         return None
+
+def find_raw_window_time_entries_by_date(date: str) -> list:
+    """Method for retrieving raw windows from the database by date"""
+    conn = sqlite3.connect("pyTrack.db")
+    c = conn.cursor()
+    c.execute("""CREATE TABLE IF NOT EXISTS windowTimeEntries(windowName text, timeElapsed text, date text)""")
+
+    c.execute("SELECT * FROM windowTimeEntries WHERE date = ?", (date,))
+    raw_windows = c.fetchall()
+    conn.commit()
+    conn.close
+    return raw_windows
+
